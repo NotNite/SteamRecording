@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -145,13 +144,11 @@ public unsafe partial struct SteamTimeline {
     [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf8)]
     private static partial nint GetProcAddress(nint module, string procName);
 
-    private static nint LoadSteamApi() {
-        if (Plugin.Configuration.NonSteamAppId is null) {
+    private static nint LoadSteamApi(uint? appId = null) {
+        if (appId is null) {
             Services.PluginLog.Debug("No Steam app ID configured");
             return nint.Zero;
         }
-
-        var appId = Plugin.Configuration.NonSteamAppId;
 
         // We need to run before Framework init, per https://partner.steamgames.com/doc/features/overlay#requirements: "As such you'll need to make sure to call SteamAPI_Init prior to initializing the OpenGL/D3D device, otherwise it won't be able to hook the device creation."
         // The overlay needs this to be initialized, per https://partner.steamgames.com/doc/features/overlay#FAQ: "If you do meet the requirements and it's still not showing up, make sure you're launching the app through the Steam client, either directly from the lobby/quick launch list, or by calling SteamAPI_RestartAppIfNecessary."
@@ -200,11 +197,11 @@ public unsafe partial struct SteamTimeline {
         return module;
     }
 
-    public static SteamTimeline* Get() {
+    public static SteamTimeline* Get(uint? appId = null) {
         if (Instance != null) return Instance;
 
         var framework = Framework.Instance();
-        if (framework == null && Plugin.Configuration.NonSteamAppId is null) {
+        if (framework == null && appId is null) {
             Services.PluginLog.Debug("Framework was null");
             return null;
         }
@@ -212,7 +209,7 @@ public unsafe partial struct SteamTimeline {
         var handle =
             (framework != null && framework->IsSteamApiInitialized())
                 ? framework->SteamApiLibraryHandle
-                : LoadSteamApi();
+                : LoadSteamApi(appId);
         if (handle == nint.Zero) {
             Services.PluginLog.Debug("Steam API library handle was null");
             return null;
