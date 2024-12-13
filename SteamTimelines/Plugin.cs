@@ -3,13 +3,17 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Lumina.Excel.Sheets;
 
-namespace SteamRecording;
+namespace SteamTimelines;
 
 public unsafe class Plugin : IDalamudPlugin {
+    public static Configuration Configuration = null!;
     private uint? lastHealth;
 
     public Plugin(IDalamudPluginInterface pluginInterface) {
         pluginInterface.Create<Services>();
+
+        Configuration = Services.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        Configuration.Save();
 
         Services.DutyState.DutyStarted += this.DutyStarted;
         Services.DutyState.DutyWiped += this.DutyWiped;
@@ -18,6 +22,9 @@ public unsafe class Plugin : IDalamudPlugin {
         Services.ClientState.Login += this.Login;
         Services.ClientState.Logout += this.Logout;
         Services.Framework.Update += this.Update;
+
+        // Force a get if it's a non-steam svc acct
+        SteamTimeline.Get();
     }
 
     private string GetZoneString() {
@@ -33,7 +40,8 @@ public unsafe class Plugin : IDalamudPlugin {
         Services.Framework.RunOnTick(() => {
             var tl = SteamTimeline.Get();
             if (tl != null) {
-                tl->AddInstantaneousTimelineEvent("Duty Started", this.GetZoneString(), "steam_combat", 0, 0, ETimelineEventClipPriority.Featured);
+                tl->AddInstantaneousTimelineEvent("Duty Started", this.GetZoneString(), "steam_combat", 0, 0,
+                    ETimelineEventClipPriority.Featured);
             }
         });
     }
@@ -51,7 +59,8 @@ public unsafe class Plugin : IDalamudPlugin {
         Services.Framework.RunOnTick(() => {
             var tl = SteamTimeline.Get();
             if (tl != null) {
-                tl->AddInstantaneousTimelineEvent("Duty Completed", this.GetZoneString(), "steam_crown", 0, 0, ETimelineEventClipPriority.Featured);
+                tl->AddInstantaneousTimelineEvent("Duty Completed", this.GetZoneString(), "steam_crown", 0, 0,
+                    ETimelineEventClipPriority.Featured);
             }
         });
     }

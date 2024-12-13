@@ -1,0 +1,10 @@
+{
+  "Name": "Steam Timelines",
+  "Author": "NotNite",
+  "Punchline": "Steam Timelines, now in FFXIV!",
+  "Description": "Records various game events with Steam Game Recording.",
+  "RepoUrl": "https://github.com/NotNite/SteamTimelines",
+  "LoadSync": true,
+  "LoadRequiredState": 2,
+  "LoadPriority": 69421
+}

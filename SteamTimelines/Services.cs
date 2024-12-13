@@ -2,7 +2,7 @@ using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
-namespace SteamRecording;
+namespace SteamTimelines;
 
 public class Services {
     [PluginService] public static IDalamudPluginInterface PluginInterface { get; private set; } = null!;

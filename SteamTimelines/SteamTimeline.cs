@@ -1,8 +1,11 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 
-namespace SteamRecording;
+namespace SteamTimelines;
 
 [StructLayout(LayoutKind.Explicit, Pack = 1)]
 public unsafe partial struct SteamTimeline {
@@ -130,27 +133,86 @@ public unsafe partial struct SteamTimeline {
     }
 
     private static SteamTimeline* Instance;
+
+    private delegate uint RestartAppIfNecessaryDelegate(uint appId);
+    private delegate nint InitDelegate();
     private delegate uint GetHSteamUserDelegate();
     private delegate nint FindOrCreateUserInterfaceDelegate(uint steamUser, char* version);
 
+    [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial nint LoadLibraryW(string fileName);
+
     [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf8)]
     private static partial nint GetProcAddress(nint module, string procName);
+
+    private static nint LoadSteamApi() {
+        if (Plugin.Configuration.NonSteamAppId is null) {
+            Services.PluginLog.Debug("No Steam app ID configured");
+            return nint.Zero;
+        }
+
+        var appId = Plugin.Configuration.NonSteamAppId;
+
+        // We need to run before Framework init, per https://partner.steamgames.com/doc/features/overlay#requirements: "As such you'll need to make sure to call SteamAPI_Init prior to initializing the OpenGL/D3D device, otherwise it won't be able to hook the device creation."
+        // The overlay needs this to be initialized, per https://partner.steamgames.com/doc/features/overlay#FAQ: "If you do meet the requirements and it's still not showing up, make sure you're launching the app through the Steam client, either directly from the lobby/quick launch list, or by calling SteamAPI_RestartAppIfNecessary."
+        // Writing a steam_appid.txt is the easiest solution here, per https://partner.steamgames.com/doc/api/steam_api#SteamAPI_RestartAppIfNecessary: "One exception is if a steam_appid.txt file is present then this will return false regardless."
+        var appidTxt = Path.GetFullPath(
+            "../steam_appid.txt",
+            Environment.ProcessPath!
+        );
+        File.WriteAllText(appidTxt, appId.ToString());
+
+        var path = Path.GetFullPath(
+            "../../boot/steam_api64.dll",
+            Environment.ProcessPath!
+        );
+        var module = LoadLibraryW(path);
+        if (module == nint.Zero) {
+            Services.PluginLog.Debug("LoadLibraryW handle was null");
+            return nint.Zero;
+        }
+
+        Environment.SetEnvironmentVariable("SteamAppId", appId.ToString());
+        Environment.SetEnvironmentVariable("SteamGameId", appId.ToString());
+
+        var restartAppIfNecessaryPtr = GetProcAddress(module, "SteamAPI_RestartAppIfNecessary");
+        if (restartAppIfNecessaryPtr == nint.Zero) {
+            Services.PluginLog.Debug("RestartAppIfNecessary addr was null");
+        }
+
+        var restartAppIfNecessary =
+            Marshal.GetDelegateForFunctionPointer<RestartAppIfNecessaryDelegate>(restartAppIfNecessaryPtr);
+        restartAppIfNecessary((uint) appId);
+
+        var initPtr = GetProcAddress(module, "SteamAPI_Init");
+        if (initPtr == nint.Zero) {
+            Services.PluginLog.Debug("Init addr was null");
+            return nint.Zero;
+        }
+
+        var init = Marshal.GetDelegateForFunctionPointer<InitDelegate>(initPtr);
+        var initResult = init();
+        if (initResult == nint.Zero) {
+            Services.PluginLog.Debug("Failed to initialize Steam: {0}", initResult);
+            return nint.Zero;
+        }
+
+        return module;
+    }
 
     public static SteamTimeline* Get() {
         if (Instance != null) return Instance;
 
         var framework = Framework.Instance();
-        if (framework == null) {
+        if (framework == null && Plugin.Configuration.NonSteamAppId is null) {
             Services.PluginLog.Debug("Framework was null");
             return null;
         }
 
-        if (!framework->IsSteamApiInitialized()) {
-            Services.PluginLog.Debug("Steam API not initialized");
-            return null;
-        }
-
-        var handle = framework->SteamApiLibraryHandle;
+        var handle =
+            (framework != null && framework->IsSteamApiInitialized())
+                ? framework->SteamApiLibraryHandle
+                : LoadSteamApi();
         if (handle == nint.Zero) {
             Services.PluginLog.Debug("Steam API library handle was null");
             return null;
