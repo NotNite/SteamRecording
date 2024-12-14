@@ -10,13 +10,13 @@ namespace SteamTimelines;
 public unsafe partial struct SteamTimeline {
     [FieldOffset(0x0)] public SteamTimelineVTable* VTable;
 
-    public void SetTimelineTooltip(string description, float timeDelta = 0f) {
+    public void SetTimelineTooltip(string description, float timeDelta = 0) {
         fixed (byte* descriptionPtr = Encoding.UTF8.GetBytes(description + "\0"))
         fixed (SteamTimeline* self = &this)
             this.VTable->SetTimelineTooltip(self, (char*) descriptionPtr, timeDelta);
     }
 
-    public void ClearTimelineTooltip(float timeDelta = 0f) {
+    public void ClearTimelineTooltip(float timeDelta = 0) {
         fixed (SteamTimeline* self = &this) this.VTable->ClearTimelineTooltip(self, timeDelta);
     }
 
@@ -25,8 +25,8 @@ public unsafe partial struct SteamTimeline {
     }
 
     public nint AddInstantaneousTimelineEvent(
-        string title, string description, string icon, uint iconPriority,
-        float startOffsetSeconds, ETimelineEventClipPriority possibleClip = ETimelineEventClipPriority.None
+        string title, string description, string icon, uint iconPriority = 0,
+        float startOffsetSeconds = 0, ETimelineEventClipPriority possibleClip = ETimelineEventClipPriority.None
     ) {
         fixed (byte* titlePtr = Encoding.UTF8.GetBytes(title + "\0"))
         fixed (byte* descriptionPtr = Encoding.UTF8.GetBytes(description + "\0"))
@@ -38,8 +38,8 @@ public unsafe partial struct SteamTimeline {
     }
 
     public nint AddRangeTimelineEvent(
-        string title, string description, string icon, uint iconPriority,
-        float startOffsetSeconds, float duration,
+        string title, string description, string icon, uint iconPriority = 0,
+        float startOffsetSeconds = 0, float duration = 0,
         ETimelineEventClipPriority possibleClip = ETimelineEventClipPriority.None
     ) {
         fixed (byte* titlePtr = Encoding.UTF8.GetBytes(title + "\0"))
@@ -52,8 +52,8 @@ public unsafe partial struct SteamTimeline {
     }
 
     public nint StartRangeTimelineEvent(
-        string title, string description, string icon, uint priority,
-        float startOffsetSeconds, ETimelineEventClipPriority possibleClip = ETimelineEventClipPriority.None
+        string title, string description, string icon, uint priority = 0,
+        float startOffsetSeconds = 0, ETimelineEventClipPriority possibleClip = ETimelineEventClipPriority.None
     ) {
         fixed (byte* titlePtr = Encoding.UTF8.GetBytes(title + "\0"))
         fixed (byte* descriptionPtr = Encoding.UTF8.GetBytes(description + "\0"))
@@ -66,7 +66,7 @@ public unsafe partial struct SteamTimeline {
 
     public void UpdateRangeTimelineEvent(
         nint @event,
-        string title, string description, string icon, uint priority,
+        string title, string description, string icon, uint priority = 0,
         ETimelineEventClipPriority possibleClip = ETimelineEventClipPriority.None
     ) {
         fixed (byte* titlePtr = Encoding.UTF8.GetBytes(title + "\0"))
@@ -78,7 +78,7 @@ public unsafe partial struct SteamTimeline {
                 (char*) iconPtr, priority, possibleClip);
     }
 
-    public void EndRangeTimelineEvent(nint @event, float endOffsetSeconds) {
+    public void EndRangeTimelineEvent(nint @event, float endOffsetSeconds = 0) {
         fixed (SteamTimeline* self = &this) this.VTable->EndRangeTimelineEvent(self, @event, endOffsetSeconds);
     }
 
@@ -101,7 +101,7 @@ public unsafe partial struct SteamTimeline {
     }
 
     public void AddGamePhaseTag(
-        string tagName, string tagIcon, string tagGroup, uint priority
+        string tagName, string tagIcon, string tagGroup, uint priority = 0
     ) {
         fixed (byte* tagNamePtr = Encoding.UTF8.GetBytes(tagName + "\0"))
         fixed (byte* tagIconPtr = Encoding.UTF8.GetBytes(tagIcon + "\0"))
@@ -112,7 +112,7 @@ public unsafe partial struct SteamTimeline {
     }
 
     public void SetGamePhaseAttribute(
-        string attributeGroup, string attributeValue, uint priority
+        string attributeGroup, string attributeValue, uint priority = 0
     ) {
         fixed (byte* attributeGroupPtr = Encoding.UTF8.GetBytes(attributeGroup + "\0"))
         fixed (byte* attributeValuePtr = Encoding.UTF8.GetBytes(attributeValue + "\0"))
@@ -198,6 +198,7 @@ public unsafe partial struct SteamTimeline {
     }
 
     public static SteamTimeline* Get(uint? appId = null) {
+        //Services.PluginLog.Verbose("Get()");
         if (Instance != null) return Instance;
 
         var framework = Framework.Instance();

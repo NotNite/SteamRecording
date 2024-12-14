@@ -29,6 +29,7 @@ public class MainWindow : Window, IDisposable {
                     "You will need to own the FFXIV free trial on Steam - you don't need to start it or play through it, it just needs to be in your Steam library.");
                 ImGui.TextWrapped(
                     "While XIVLauncher can be added as a non-Steam game, it will not work, because the API only works for actual Steam games.");
+                ImGui.TextWrapped("Restart the game after changing this.");
 
                 var notNull = this.configuration.NonSteamAppId is not null;
                 if (ImGui.Checkbox("Enable Non-Steam compatibility", ref notNull)) {

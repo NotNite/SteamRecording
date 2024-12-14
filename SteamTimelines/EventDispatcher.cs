@@ -15,6 +15,7 @@ public unsafe class EventDispatcher {
         Services.ClientState.Login += this.Login;
         Services.ClientState.Logout += this.Logout;
         Services.Framework.Update += this.Update;
+        Services.ClientState.TerritoryChanged += this.TerritoryChanged;
     }
 
     private string GetZoneString() {
@@ -40,7 +41,7 @@ public unsafe class EventDispatcher {
         Services.Framework.RunOnTick(() => {
             var tl = SteamTimeline.Get();
             if (tl != null) {
-                tl->AddInstantaneousTimelineEvent("Duty Wipe", this.GetZoneString(), "steam_x", 0, 0);
+                tl->AddInstantaneousTimelineEvent("Duty Wipe", this.GetZoneString(), "steam_x");
             }
         });
     }
@@ -73,7 +74,7 @@ public unsafe class EventDispatcher {
                     if (tl != null) {
                         if (value) {
                             tl->StartGamePhase();
-                            tl->SetGamePhaseAttribute("Duty", this.GetZoneString(), 0);
+                            tl->AddGamePhaseTag(this.GetZoneString(), "steam_attack", "Duty");
                         } else {
                             tl->EndGamePhase();
                         }
@@ -108,14 +109,14 @@ public unsafe class EventDispatcher {
             if (this.lastHealth is null) {
                 this.lastHealth = health;
             } else if (this.lastHealth != health) {
-                var capturedHealth = this.lastHealth.Value;
+                //var capturedHealth = this.lastHealth.Value;
 
                 Services.Framework.RunOnTick(() => {
                     var tl = SteamTimeline.Get();
                     if (tl != null) {
                         var zone = this.GetZoneString();
                         if (health == 0) {
-                            tl->AddInstantaneousTimelineEvent("Death", zone, "steam_death", 0, 0);
+                            tl->AddInstantaneousTimelineEvent("Death", zone, "steam_death");
                         } /*else if (capturedHealth == 0) {
                             tl->AddInstantaneousTimelineEvent("Raise", zone, "steam_heart", 0, 0);
                         }*/
@@ -125,6 +126,15 @@ public unsafe class EventDispatcher {
                 this.lastHealth = health.Value;
             }
         }
+    }
+
+    private void TerritoryChanged(ushort obj) {
+        Services.Framework.RunOnTick(() => {
+            var tl = SteamTimeline.Get();
+            if (tl != null) {
+                tl->SetTimelineTooltip(this.GetZoneString());
+            }
+        });
     }
 
     public void Dispose() {

@@ -2,7 +2,7 @@
     "Name": "Steam Timelines",
     "Author": "NotNite",
     "Punchline": "Steam Timelines, now in FFXIV!",
-    "Description": "Records various game events with Steam Game Recording. Events like duty wipes, loading screens, deaths, etc. will be labeled within Steam Game Recording.",
+    "Description": "Records various game events with Steam Game Recording. Events like duty wipes, loading screens, deaths, etc. will be labeled within Steam Game Recording.\nExtra configuration is required for non-Steam service accounts - open the config menu after installation.",
     "RepoUrl": "https://github.com/NotNite/SteamTimelines",
     "LoadSync": true,
     "LoadRequiredState": 2,
