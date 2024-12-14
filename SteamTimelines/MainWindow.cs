@@ -21,7 +21,7 @@ public class MainWindow : Window, IDisposable {
         ImGui.TextWrapped("Your Steam Game Recording sessions will now have extra labels. Yay! :steamhappy:");
         ImGui.TextWrapped("If you don't own the game through Steam, you'll need to do some extra configuration.");
 
-        if (ImGui.CollapsingHeader("For Non-Steam users")) {
+        if (ImGui.CollapsingHeader("For non-Steam users")) {
             using (ImRaii.PushIndent()) {
                 ImGui.TextWrapped(
                     "The Steam overlay needs to be active with a real Steam game playing for the Steam Timelines API to work. The plugin will connect to the Steam API pretending to be the FFXIV free trial.");
@@ -32,7 +32,7 @@ public class MainWindow : Window, IDisposable {
                 ImGui.TextWrapped("Restart the game after changing this.");
 
                 var notNull = this.configuration.NonSteamAppId is not null;
-                if (ImGui.Checkbox("Enable Non-Steam compatibility", ref notNull)) {
+                if (ImGui.Checkbox("Enable non-Steam compatibility", ref notNull)) {
                     if (this.configuration.NonSteamAppId is not null) {
                         this.configuration.NonSteamAppId = null;
                     } else {
