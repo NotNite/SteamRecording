@@ -145,5 +145,6 @@ public unsafe class EventDispatcher {
         Services.ClientState.Login -= this.Login;
         Services.ClientState.Logout -= this.Logout;
         Services.Framework.Update -= this.Update;
+        Services.ClientState.TerritoryChanged -= this.TerritoryChanged;
     }
 }
